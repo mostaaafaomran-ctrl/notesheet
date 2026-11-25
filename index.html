@@ -1,0 +1,70 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Notesheet | Messy notes to a one-page printable cheat sheet</title>
+<meta name="description" content="Paste messy notes, get a clean one-page cheat sheet in 2 or 3 columns. Print to PDF. Arabic and English. Offline.">
+<meta property="og:title" content="Notesheet"><meta property="og:description" content="Messy notes in, one-page cheat sheet out. Print to PDF."><meta property="og:image" content="og.png"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:image" content="og.png">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23fff35c'/%3E%3Cpath d='M25 30h50M25 50h50M25 70h30' stroke='%23222' stroke-width='8'/%3E%3C/svg%3E">
+<style>
+:root{--hl:#fff35c;--ink:#1d1d1f}
+*{box-sizing:border-box}body{margin:0;background:#e9e6df;color:var(--ink);font:15px/1.5 Georgia,"Times New Roman",serif}
+header{padding:18px 22px;background:#fffdf6;border-bottom:2px solid var(--ink);display:flex;gap:16px;align-items:baseline;flex-wrap:wrap}
+h1{margin:0;font-size:26px}h1 span{background:var(--hl);padding:0 6px}header p{margin:0;color:#555}
+main{display:grid;grid-template-columns:minmax(280px,420px) 1fr;gap:18px;padding:18px;align-items:start}
+@media(max-width:860px){main{grid-template-columns:1fr}}
+.panel{background:#fffdf6;border:2px solid var(--ink);padding:14px;border-radius:4px}
+textarea{width:100%;height:380px;font:14px/1.5 ui-monospace,Menlo,Consolas,monospace;border:1px solid #bbb;padding:10px;background:#fff;resize:vertical}
+.ctl{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:10px;font:13px system-ui,sans-serif}
+button,select{font:600 13px system-ui,sans-serif;border:2px solid var(--ink);background:#fff;padding:6px 12px;cursor:pointer;border-radius:3px}button.p{background:var(--hl)}
+.hint{font:12px system-ui,sans-serif;color:#666;margin-top:8px}
+#sheet{background:#fff;width:100%;max-width:794px;min-height:600px;margin:0 auto;padding:22px;box-shadow:0 4px 18px #0003;column-count:2;column-gap:22px;font-size:var(--fs,12px);line-height:1.4}
+#sheet h2{font:800 1.15em system-ui,sans-serif;margin:0 0 4px;background:var(--hl);padding:1px 6px;break-after:avoid;display:inline-block}
+#sheet .sec{break-inside:avoid;margin-bottom:12px;border-top:2px solid var(--ink);padding-top:6px}
+#sheet ul{margin:2px 0;padding-inline-start:16px}#sheet li{margin:1px 0}#sheet p{margin:2px 0}
+#sheet code{background:#eee;padding:0 3px;font-size:.92em}#sheet mark{background:var(--hl)}
+#sheet .t{font:800 1.5em system-ui,sans-serif;column-span:all;border-bottom:3px solid var(--ink);margin-bottom:10px}
+@media print{body{background:#fff}header,.panel,.hint{display:none}main{display:block;padding:0}#sheet{box-shadow:none;max-width:none;padding:0}@page{size:A4;margin:12mm}}
+</style></head><body>
+<header><h1>Note<span>sheet</span></h1><p>Messy notes in. One-page cheat sheet out.</p></header>
+<main><div class="panel"><textarea id="src" dir="auto" spellcheck="false" placeholder="# Title&#10;## Section&#10;- point&#10;**key term** explained&#10;`code`"></textarea>
+<div class="ctl"><label>Columns <select id="cols"><option>1</option><option selected>2</option><option>3</option></select></label><label>Text <select id="fs"><option value="10">Small</option><option value="12" selected>Normal</option><option value="14">Large</option></select></label><button class="p" id="pr">Print / PDF</button><button id="cp">Copy HTML</button></div>
+<div class="hint">First line starting with # is the title. Lines with ## start a section. "- " makes bullets. **bold**, ==highlight==, `code`. Plain lines under a section become bullets too. Saved on this device only.</div></div>
+<div id="sheet"></div></main>
+<script>
+const $=id=>document.getElementById(id),esc=s=>s.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+const inl=s=>esc(s).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>').replace(/==(.+?)==/g,'<mark>$1</mark>').replace(/`(.+?)`/g,'<code>$1</code>');
+function render(){const L=$('src').value.split('\n');let h='',open=false,ul=false;
+const cu=()=>{if(ul){h+='</ul>';ul=false}};const cs=()=>{cu();if(open){h+='</div>';open=false}};
+for(let l of L){l=l.trim();if(!l)continue;
+if(/^# /.test(l)){h+='<div class="t" dir="auto">'+inl(l.slice(2))+'</div>';continue}
+if(/^##+ /.test(l)){cs();h+='<div class="sec"><h2 dir="auto">'+inl(l.replace(/^#+ /,''))+'</h2>';open=true;continue}
+if(!open){h+='<div class="sec">';open=true}
+if(!ul){h+='<ul>';ul=true}h+='<li dir="auto">'+inl(l.replace(/^[-*•] /,''))+'</li>'}
+cs();$('sheet').innerHTML=h||'<p style="color:#999">Your cheat sheet shows here.</p>';
+$('sheet').style.columnCount=$('cols').value;$('sheet').style.setProperty('--fs',$('fs').value+'px');
+localStorage.setItem('notesheet',JSON.stringify({s:$('src').value,c:$('cols').value,f:$('fs').value}))}
+const DEMO=`# Big-O cheat sheet | ملخص التعقيد
+## Sorting
+- **Quick sort** avg O(n log n), worst O(n²)
+- **Merge sort** always O(n log n), needs O(n) space
+- ==Insertion sort== is fast on nearly sorted data
+- الفرز السريع: بيقسم المصفوفة حوالين pivot
+## Searching
+- Linear search: O(n)
+- Binary search: O(log n), array must be sorted
+- Hash table lookup: O(1) average
+## Data structures
+- Stack: LIFO, push/pop O(1)
+- Queue: FIFO, enqueue/dequeue O(1)
+- Heap: insert O(log n), peek O(1)
+- BST: search O(h), h = height
+## SQL quick
+- \`SELECT\` ... \`FROM\` ... \`WHERE\` ... \`GROUP BY\` ... \`HAVING\` ... \`ORDER BY\`
+- JOIN types: INNER, LEFT, RIGHT, FULL
+- Index speeds reads, slows writes
+## Remember
+- Draw the example first
+- Check edge cases: empty, one item, duplicates`;
+try{const o=JSON.parse(localStorage.getItem('notesheet')||'null');if(o){$('src').value=o.s;$('cols').value=o.c;$('fs').value=o.f}}catch(e){}
+if(/demo=1/.test(location.search)||!$('src').value)$('src').value=DEMO;
+['src','cols','fs'].forEach(i=>$(i).addEventListener('input',render));$('pr').onclick=()=>print();
+$('cp').onclick=()=>{navigator.clipboard.writeText($('sheet').innerHTML);$('cp').textContent='Copied';setTimeout(()=>$('cp').textContent='Copy HTML',1200)};render();
+</script></body></html>
